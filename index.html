@@ -514,6 +514,9 @@
     .flavor-field { grid-column: 1 / -1; }
     .flavor-filter > summary { align-items: center; background: #fff; border: 1px solid #c8d4ca; border-radius: 4px; color: var(--ink); cursor: pointer; display: flex; font-size: 13px; justify-content: space-between; min-height: 42px; padding: 0 11px; }
     .flavor-panel { background: #fff; border: 1px solid var(--line); border-radius: 4px; margin-top: 7px; padding: 12px; }
+    .flavor-mode-switch { background: #f0f4f0; border-radius: 4px; display: grid; gap: 3px; grid-template-columns: 1fr 1fr; margin-bottom: 10px; padding: 3px; }
+    .flavor-mode-button { background: transparent; border: 0; border-radius: 3px; color: var(--muted); cursor: pointer; font-size: 12px; font-weight: 700; min-height: 34px; }
+    .flavor-mode-button[aria-pressed="true"] { background: var(--forest); color: #fff; }
     .flavor-actions { display: flex; gap: 7px; margin-bottom: 10px; }
     .flavor-action { background: #fff; border: 1px solid #c8d4ca; border-radius: 4px; color: var(--forest); cursor: pointer; font-size: 12px; font-weight: 700; min-height: 34px; padding: 0 10px; }
     .flavor-options { display: grid; gap: 7px 10px; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); }
@@ -799,7 +802,7 @@
             <option value="flavor-variety">Más variedad de notas de sabor</option>
           </select>
         </div>
-        <div id="flavor-filter-generated"><div class="field flavor-field"><span class="field-label" id="flavor-filter-label">Sabores</span><details class="flavor-filter" id="flavor-filter" aria-labelledby="flavor-filter-label"><summary id="flavor-filter-summary">Todos los sabores</summary><div class="flavor-panel"><div class="flavor-actions"><button class="flavor-action" id="flavor-select-all" type="button">Todos</button><button class="flavor-action" id="flavor-select-none" type="button">Ninguno</button></div><div class="flavor-options" id="flavor-options" role="group" aria-label="Familias de sabor"><label class="flavor-option"><input type="checkbox" value="dulce" checked><span class="flavor-chip" data-flavor="dulce">dulce</span></label><label class="flavor-option"><input type="checkbox" value="salado_umami" checked><span class="flavor-chip" data-flavor="salado_umami">salado/umami</span></label><label class="flavor-option"><input type="checkbox" value="acido" checked><span class="flavor-chip" data-flavor="acido">ácido</span></label><label class="flavor-option"><input type="checkbox" value="citrico" checked><span class="flavor-chip" data-flavor="citrico">cítrico</span></label><label class="flavor-option"><input type="checkbox" value="picante" checked><span class="flavor-chip" data-flavor="picante">picante</span></label><label class="flavor-option"><input type="checkbox" value="ahumado" checked><span class="flavor-chip" data-flavor="ahumado">ahumado</span></label><label class="flavor-option"><input type="checkbox" value="herbal_fresco" checked><span class="flavor-chip" data-flavor="herbal_fresco">herbal/fresco</span></label><label class="flavor-option"><input type="checkbox" value="amargo" checked><span class="flavor-chip" data-flavor="amargo">amargo</span></label><label class="flavor-option"><input type="checkbox" value="frutos_secos" checked><span class="flavor-chip" data-flavor="frutos_secos">frutos secos</span></label><label class="flavor-option"><input type="checkbox" value="tostado" checked><span class="flavor-chip" data-flavor="tostado">tostado</span></label></div></div></details></div></div>
+        <div id="flavor-filter-generated"><div class="field flavor-field"><span class="field-label" id="flavor-filter-label">Sabores</span><details class="flavor-filter" id="flavor-filter" aria-labelledby="flavor-filter-label"><summary id="flavor-filter-summary">Sin filtro de sabor</summary><div class="flavor-panel"><div class="flavor-mode-switch" role="group" aria-label="Modo del filtro de sabores"><button class="flavor-mode-button" id="flavor-mode-include" type="button" aria-pressed="true">Incluir</button><button class="flavor-mode-button" id="flavor-mode-exclude" type="button" aria-pressed="false">Excluir</button></div><div class="flavor-actions"><button class="flavor-action" id="flavor-select-all" type="button">Incluir todos</button><button class="flavor-action" id="flavor-select-none" type="button">Limpiar</button></div><div class="flavor-options" id="flavor-options" role="group" aria-label="Familias de sabor"><label class="flavor-option"><input type="checkbox" value="dulce"><span class="flavor-chip" data-flavor="dulce">dulce</span></label><label class="flavor-option"><input type="checkbox" value="salado_umami"><span class="flavor-chip" data-flavor="salado_umami">salado/umami</span></label><label class="flavor-option"><input type="checkbox" value="acido"><span class="flavor-chip" data-flavor="acido">ácido</span></label><label class="flavor-option"><input type="checkbox" value="citrico"><span class="flavor-chip" data-flavor="citrico">cítrico</span></label><label class="flavor-option"><input type="checkbox" value="picante"><span class="flavor-chip" data-flavor="picante">picante</span></label><label class="flavor-option"><input type="checkbox" value="ahumado"><span class="flavor-chip" data-flavor="ahumado">ahumado</span></label><label class="flavor-option"><input type="checkbox" value="herbal_fresco"><span class="flavor-chip" data-flavor="herbal_fresco">herbal/fresco</span></label><label class="flavor-option"><input type="checkbox" value="amargo"><span class="flavor-chip" data-flavor="amargo">amargo</span></label><label class="flavor-option"><input type="checkbox" value="frutos_secos"><span class="flavor-chip" data-flavor="frutos_secos">frutos secos</span></label><label class="flavor-option"><input type="checkbox" value="tostado"><span class="flavor-chip" data-flavor="tostado">tostado</span></label></div></div></details></div></div>
       </fieldset>
 
 <noscript>
@@ -1861,20 +1864,23 @@
 
   <script>
     (() => {
-      const state = { groups: [], metadata: null, view: "ranking", selectedFlavors: new Set() };
+      const state = { groups: [], metadata: null, view: "ranking", flavorMode: "include", includedFlavors: new Set(), excludedFlavors: new Set() };
       const results = document.querySelector("#results");
       const searchInput = document.querySelector("#search");
       const cityFilter = document.querySelector("#city-filter");
       const sortMode = document.querySelector("#sort-mode");
       const flavorOptions = document.querySelector("#flavor-options");
       const flavorSummary = document.querySelector("#flavor-filter-summary");
+      const flavorModeButtons = {
+        include: document.querySelector("#flavor-mode-include"),
+        exclude: document.querySelector("#flavor-mode-exclude"),
+      };
       const panel = document.querySelector("#view-panel");
       const tabs = [...document.querySelectorAll("[data-view]")];
       const ingredientCount = (record) => Array.isArray(record.ingredientes) ? record.ingredientes.length : 0;
       const flavorNoteCount = (record) => new Set(record.notas_sabor_descritas || []).size;
       const flavorNoteLabels = { dulce: "dulce", salado_umami: "salado/umami", acido: "ácido", citrico: "cítrico", picante: "picante", ahumado: "ahumado", herbal_fresco: "herbal/fresco", amargo: "amargo", frutos_secos: "frutos secos", tostado: "tostado" };
       const flavorNoteNames = Object.keys(flavorNoteLabels);
-      state.selectedFlavors = new Set(flavorNoteNames);
       const element = (tag, className, text) => {
         const node = document.createElement(tag);
         if (className) node.className = className;
@@ -1883,22 +1889,51 @@
       };
 
       function updateFlavorSummary() {
-        if (state.selectedFlavors.size === flavorNoteNames.length) {
-          flavorSummary.textContent = "Todos los sabores";
-        } else if (state.selectedFlavors.size === 0) {
-          flavorSummary.textContent = "Ninguno";
-        } else {
-          const count = state.selectedFlavors.size;
-          flavorSummary.textContent = count === 1 ? "1 sabor seleccionado" : `${count} sabores seleccionados`;
+        const parts = [];
+        if (state.includedFlavors.size) parts.push(`Incluir: ${selectedFlavorLabels(state.includedFlavors)}`);
+        if (state.excludedFlavors.size) parts.push(`Excluir: ${selectedFlavorLabels(state.excludedFlavors)}`);
+        flavorSummary.textContent = parts.join(" · ") || "Sin filtro de sabor";
+      }
+
+      function selectedFlavorLabels(selection) {
+        return flavorNoteNames
+          .filter((note) => selection.has(note))
+          .map((note) => flavorNoteLabels[note])
+          .map((label) => label.charAt(0).toLocaleUpperCase("es") + label.slice(1))
+          .join(" · ");
+      }
+
+      function activeFlavorSelection() {
+        return state.flavorMode === "include" ? state.includedFlavors : state.excludedFlavors;
+      }
+
+      function syncFlavorControls() {
+        const selection = activeFlavorSelection();
+        for (const checkbox of flavorOptions.querySelectorAll('input[type="checkbox"]')) {
+          checkbox.checked = selection.has(checkbox.value);
+        }
+        document.querySelector("#flavor-select-all").textContent = state.flavorMode === "include" ? "Incluir todos" : "Excluir todos";
+        for (const [mode, button] of Object.entries(flavorModeButtons)) {
+          button.setAttribute("aria-pressed", String(state.flavorMode === mode));
         }
       }
 
       function setFlavorSelection(notes) {
-        state.selectedFlavors = new Set(notes);
-        for (const checkbox of flavorOptions.querySelectorAll('input[type="checkbox"]')) {
-          checkbox.checked = state.selectedFlavors.has(checkbox.value);
+        const selection = activeFlavorSelection();
+        const otherSelection = state.flavorMode === "include" ? state.excludedFlavors : state.includedFlavors;
+        selection.clear();
+        for (const note of notes) {
+          selection.add(note);
+          otherSelection.delete(note);
         }
+        syncFlavorControls();
         updateFlavorSummary();
+        render();
+      }
+
+      function setFlavorMode(mode) {
+        state.flavorMode = mode;
+        syncFlavorControls();
         render();
       }
 
@@ -1937,9 +1972,18 @@
         return !query || searchableText(record, branches, cityNames).includes(query);
       }
 
-      function matchesSelectedFlavors(record) {
-        if (state.selectedFlavors.size === flavorNoteNames.length) return true;
-        return (record.notas_sabor_descritas || []).some((note) => state.selectedFlavors.has(note));
+      function matchesFlavorFilters(record) {
+        const notes = new Set(record.notas_sabor_descritas || []);
+        const matchesIncluded = !state.includedFlavors.size
+          || [...state.includedFlavors].some((note) => notes.has(note));
+        const hasExcluded = [...state.excludedFlavors].some((note) => notes.has(note));
+        return matchesIncluded && !hasExcluded;
+      }
+
+      function visibleFlavorNotes(record) {
+        const notes = record.notas_sabor_descritas || [];
+        if (state.includedFlavors.size) return notes.filter((note) => state.includedFlavors.has(note));
+        return notes.filter((note) => !state.excludedFlavors.has(note));
       }
 
       function globalEntries() {
@@ -1963,7 +2007,7 @@
         }
         return [...byPizza.values()]
           .map((entry) => ({ ...entry, cities: [...entry.cities], branches: [...entry.branches.values()] }))
-          .filter((entry) => matches(entry.record, entry.branches, entry.cities, query) && matchesSelectedFlavors(entry.record))
+          .filter((entry) => matches(entry.record, entry.branches, entry.cities, query) && matchesFlavorFilters(entry.record))
           .sort(compareRecords);
       }
 
@@ -1971,7 +2015,7 @@
         const query = searchInput.value.trim().toLocaleLowerCase("es");
         return records
           .map((record) => ({ record, cities: [city], branches: record.sede || [] }))
-          .filter((entry) => matches(entry.record, entry.branches, entry.cities, query) && matchesSelectedFlavors(entry.record))
+          .filter((entry) => matches(entry.record, entry.branches, entry.cities, query) && matchesFlavorFilters(entry.record))
           .sort(compareRecords);
       }
 
@@ -2015,7 +2059,7 @@
       }
 
       function renderFlavorNotes(parent, record) {
-        const notes = record.notas_sabor_descritas || [];
+        const notes = visibleFlavorNotes(record);
         if (!notes.length) return;
 
         const list = element("div", "flavor-list");
@@ -2194,17 +2238,27 @@
         }
       }
 
+      syncFlavorControls();
       updateFlavorSummary();
       for (const checkbox of flavorOptions.querySelectorAll('input[type="checkbox"]')) {
         checkbox.addEventListener("change", () => {
-          if (checkbox.checked) state.selectedFlavors.add(checkbox.value);
-          else state.selectedFlavors.delete(checkbox.value);
+          const selection = activeFlavorSelection();
+          const otherSelection = state.flavorMode === "include" ? state.excludedFlavors : state.includedFlavors;
+          if (checkbox.checked) {
+            selection.add(checkbox.value);
+            otherSelection.delete(checkbox.value);
+          } else {
+            selection.delete(checkbox.value);
+          }
           updateFlavorSummary();
+          syncFlavorControls();
           render();
         });
       }
       document.querySelector("#flavor-select-all").addEventListener("click", () => setFlavorSelection(flavorNoteNames));
       document.querySelector("#flavor-select-none").addEventListener("click", () => setFlavorSelection([]));
+      flavorModeButtons.include.addEventListener("click", () => setFlavorMode("include"));
+      flavorModeButtons.exclude.addEventListener("click", () => setFlavorMode("exclude"));
       searchInput.addEventListener("input", render);
       cityFilter.addEventListener("change", render);
       sortMode.addEventListener("change", render);
